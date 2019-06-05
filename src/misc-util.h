@@ -53,7 +53,7 @@ inline uint64_t convertMacAddressToUint64(String mac) {
 	char * tok;
 	int i = 0;
 
-	while (tok = strtok_r(ptr, ":", &ptr)) {
+	while ((tok = strtok_r(ptr, ":", &ptr)) != nullptr) {
 		data[i++] = strtoul(tok, nullptr, 16);
 	}
 
@@ -71,9 +71,8 @@ inline std::vector<uint8_t> convertMacAddressToUint8Array(String mac) {
 	char *ptr = &(buf[0]);
 
 	char * tok;
-	int i = 0;
 
-	while (tok = strtok_r(ptr, ":", &ptr)) {
+	while ((tok = strtok_r(ptr, ":", &ptr)) != nullptr) {
 		res.push_back((uint8_t)strtoul(tok, nullptr, 16));
 	}
 	return res;

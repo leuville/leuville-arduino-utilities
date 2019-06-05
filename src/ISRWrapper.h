@@ -169,10 +169,10 @@ class ISRTimer {
 
 protected:
 
+	RTCZero		& _rtc;
 	uint32_t	_timeout = 60*60;
 	bool 		_enabled = false;
 	bool 		_repeated = false;
-	RTCZero & 	_rtc;
 
 public:
 
