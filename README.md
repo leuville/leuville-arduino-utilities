@@ -5,10 +5,11 @@ Various programming utilities
 	 - ISRWrapper: object-oriented ISR wrapper
 	 - ISRTimer : base class for timer based on RTCZero
  - energy.h
-	 - StandbyMode: object-oriented class to provide 
+	 - StandbyMode: base class to provide standby mode
  
- Example:
-
+## Example
+ This code 
+ 
      class Device: private ISRWrapper<A3> {
         public:
         	using ISRWrapper<A3>::ISRWrapper; // inherits constructor
@@ -18,5 +19,5 @@ Various programming utilities
         	}
      };
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbMTE3ODcwMzMzMSwxNzYwOTMxOTMzXX0=
+eyJoaXN0b3J5IjpbNDA5NjM5MzM3LDE3NjA5MzE5MzNdfQ==
 -->
