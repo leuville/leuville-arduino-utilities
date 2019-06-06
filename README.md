@@ -5,7 +5,7 @@ Various programming utilities
 	 - ISRWrapper: object-oriented ISR wrapper
 	 - ISRTimer : object-oriented timer based on RCTZero
  - energy.h
-	 - 
+	 - StandbyMode: object-oriented class to provide 
  
  Example:
 
@@ -18,5 +18,5 @@ Various programming utilities
         	}
      };
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE4NjMwODUyNDNdfQ==
+eyJoaXN0b3J5IjpbMTc2MDkzMTkzM119
 -->
