@@ -1,5 +1,7 @@
 # leuville-arduino-utilities
-Various programming utilities
+Various programming utilities for Arduino devices.
+
+## Contents
 
  - ISRWrapper.h:
 	 - ISRWrapper: object-oriented ISR wrapper
@@ -19,5 +21,5 @@ Various programming utilities
         	}
      };
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbNDA5NjM5MzM3LDE3NjA5MzE5MzNdfQ==
+eyJoaXN0b3J5IjpbLTUwNjI0ODUyNSwxNzYwOTMxOTMzXX0=
 -->
