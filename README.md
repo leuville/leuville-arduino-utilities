@@ -9,7 +9,7 @@ Various programming utilities for Arduino devices.
  - energy.h
 	 - StandbyMode: base class to provide standby mode
  
-## Example 1: ISRWrapper<>
+## Example 1: ISRWrapper
  This code builds a new class with a button connected on pin A3. Each time the button is pressed, the virtual function ISR_callback is called. The pin number is a template parameter.
  
      class Device: private ISRWrapper<A3> {
@@ -21,5 +21,5 @@ Various programming utilities for Arduino devices.
         	}
      };
 <!--stackedit_data:
-eyJoaXN0b3J5IjpbLTE0MjIzMTk1MTAsMTc2MDkzMTkzM119
+eyJoaXN0b3J5IjpbLTU3OTQ5ODcxMiwxNzYwOTMxOTMzXX0=
 -->
