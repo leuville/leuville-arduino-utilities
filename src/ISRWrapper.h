@@ -65,10 +65,13 @@ public:
 
 		assert(_instance == nullptr);
 		_instance = this;
-		pinMode(_pin, _mode);
 	}
 
 	virtual ~ISRWrapper() = default;
+
+	virtual void begin() {
+		pinMode(_pin, _mode);
+	}
 
 	virtual void enable() {
 		enable(_reason);
@@ -213,6 +216,20 @@ public:
 		_enabled = false;
 		_rtc.disableAlarm();
 		_rtc.detachInterrupt();
+	}
+
+	/*
+	 * Set the timeout value
+	 */
+	virtual void setTimeout(uint32_t timeout) {
+		boolean enabled = _enabled;
+		if (_enabled) {
+			disable();
+		}
+		_timeout = timeout;
+		if (enabled) {
+			enable();
+		}
 	}
 
 	/*

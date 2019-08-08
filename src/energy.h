@@ -1,7 +1,7 @@
 /*
  * Module: energy
  *
- * Function: classes for Object-Oriented approach of ISR
+ * Function: utilities to save energy
  *
  */
 #pragma once
@@ -10,7 +10,7 @@
 #include <ArduinoSTL.h>
 
 /*
- * Energy saving
+ * Energy saving: pull up pins
  */
 void pullupPins(std::initializer_list<uint8_t> unusedPins) {
 	for (uint8_t pin: unusedPins) {
@@ -36,8 +36,8 @@ void standbyMode(RTCZero & rtc) {
 }
 
 /*
- * 32kHz clock initialization for syandby modes
- * Must be called after a first attachInterrupt()
+ * 32kHz clock initialization for standby modes
+ * Must be called after a first call to attachInterrupt()
  */
 void setupClock() {
 
@@ -60,24 +60,13 @@ void setupClock() {
 }
 
 /*
- * Enable an ext interrupt the way to wakeup the EIC in standbymode
+ * Return the current voltage, between 0 and 100%
  */
-void activateIntForStandbyMode(std::initializer_list<uint32_t> extIntList) {
-	for (uint32_t eint: extIntList) {
-		EIC->WAKEUP.vec.WAKEUPEN |= (1<<eint);
-	}
-}
+template <uint16_t BATTPIN = A7, uint16_t POWDIVIDER = 2>
+uint8_t getBatteryPower() {
+	constexpr uint16_t VMAX = 420;	// 4.20 V
+	constexpr uint16_t VMIN = 360;	// 3.60 V
 
-constexpr uint16_t VMAX = 420;	// 4.20 V
-constexpr uint16_t VMIN = 360;	// 3.60 V
-constexpr uint16_t BATTPIN = A7;
-constexpr uint16_t POWDIVIDER = 2;
-
-//
-// voltage obtenu sur A7(D9)
-// retourne un pourcentage de charge restante
-//
-uint8_t getRemainingPower() {
 	int vcurrent = (int)((analogRead(BATTPIN)*POWDIVIDER*3.3*100)/1024);
 	if (vcurrent > VMAX)
 		vcurrent = VMAX;
@@ -88,6 +77,8 @@ uint8_t getRemainingPower() {
 
 /*
  * Provides standbymode based on RTCZero
+ *
+ * A device with standby feature should inherit from this class
  */
 class StandbyMode {
 
@@ -95,8 +86,7 @@ class StandbyMode {
 
 public:
 
-	StandbyMode(RTCZero & rtc): _rtc(rtc) {
-	}
+	StandbyMode(RTCZero & rtc): _rtc(rtc) {}
 
 	void begin() {
 		setupClock();

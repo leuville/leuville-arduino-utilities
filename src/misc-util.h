@@ -5,6 +5,19 @@
 #include <vector>
 
 /*
+ * Prints a hexadecimal value in plain characters
+ */
+void printHex(const uint8_t* data, const uint32_t numBytes) {
+	for (uint8_t i = 0; i < numBytes; i++) {
+		if (data[i] < 0x10) {
+			Serial.print("0");
+		}
+		Serial.print(data[i], HEX);
+	}
+	Serial.println("");
+}
+
+/*
  * Utilitaires de gestion du TEMPS
  */
 #define UINT32_SECONDS(h,m,s) (uint32_t)(UINT16_MINUTES(h,m)*60+s)

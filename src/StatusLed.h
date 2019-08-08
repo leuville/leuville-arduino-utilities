@@ -1,5 +1,5 @@
 /*
- * Led clignotante
+ * Blinking led
  */
 #define LED_HIGH 	HIGH
 #define LED_LOW		LOW
