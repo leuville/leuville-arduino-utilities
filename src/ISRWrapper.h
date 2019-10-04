@@ -3,6 +3,9 @@
  *
  * Function: classes for Object-Oriented approach of ISR
  *
+ * Copyright and license: See accompanying LICENSE file.
+ *
+ * Author: Laurent Nel
  */
 
 #pragma once

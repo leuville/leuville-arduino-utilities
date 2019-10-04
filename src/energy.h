@@ -3,7 +3,11 @@
  *
  * Function: utilities to save energy
  *
+ * Copyright and license: See accompanying LICENSE file.
+ *
+ * Author: Laurent Nel
  */
+
 #pragma once
 
 #include <RTCZero.h>

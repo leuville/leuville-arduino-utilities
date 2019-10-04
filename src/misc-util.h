@@ -1,3 +1,13 @@
+/*
+ * Module: misc-util
+ *
+ * Function: various utilities
+ *
+ * Copyright and license: See accompanying LICENSE file
+ *
+ * Author: Laurent Nel
+ */
+
 #pragma once
 
 #include <Arduino.h>

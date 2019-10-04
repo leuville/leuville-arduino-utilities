@@ -1,6 +1,15 @@
 /*
- * Blinking led
+ * Module: StatusLed.h
+ *
+ * Function: builtin led utilities
+ *
+ * Copyright and license: See accompanying LICENSE file
+ *
+ * Author: Laurent Nel
  */
+
+#pragma once
+
 #define LED_HIGH 	HIGH
 #define LED_LOW		LOW
 
