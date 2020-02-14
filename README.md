@@ -8,6 +8,7 @@ Various programming utilities for Arduino devices.
 	 - ISRTimer : base class for timer based on RTCZero
  - energy.h
 	 - StandbyMode: base class to provide standby mode
+ - deque.h: template fixed-size FIFO double-ended queue
  
 ## Example 1: ISRWrapper
  This code builds a new class with a button connected on pin A3. Each time the button is pressed, the virtual function ISR_callback is called. The pin number is a template parameter.

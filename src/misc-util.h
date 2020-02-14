@@ -11,8 +11,14 @@
 #pragma once
 
 #include <Arduino.h>
-#include <ArduinoSTL.h>
-#include <vector>
+
+/*
+ * Returns the capacity in terms of number of elements of a C array
+ */
+template <typename T>
+size_t arrayCapacity(const T & tab) {
+  return sizeof tab / sizeof tab[0];
+}
 
 /*
  * Prints a hexadecimal value in plain characters
@@ -66,6 +72,7 @@ inline uint64_t convertUint8ArrayToUint64(const uint8_t *data, const uint8_t num
 /*
  * Convert MAC address to uint64_t
  */
+/*
 inline uint64_t convertMacAddressToUint64(String mac) {
 	const uint8_t siz = 6;
 	uint8_t data[siz];
@@ -82,47 +89,20 @@ inline uint64_t convertMacAddressToUint64(String mac) {
 
 	return convertUint8ArrayToUint64(data, siz);
 }
-
-/*
- * Convert a string containing mac address to a vector of uint8_t
- */
-inline std::vector<uint8_t> convertMacAddressToUint8Array(String mac) {
-	std::vector<uint8_t> res;
-	res.reserve(6);
-	char buf[64];
-	strcpy(buf, (char*)mac.c_str());
-	char *ptr = &(buf[0]);
-
-	char * tok;
-
-	while ((tok = strtok_r(ptr, ":", &ptr)) != nullptr) {
-		res.push_back((uint8_t)strtoul(tok, nullptr, 16));
-	}
-	return res;
-}
-
-/*
- * Convert a std::string containing HEX to uint8_t array
- */
-/*
-void convertHexStringToIntArray(const std::string& hex, uint8_t * tab) {
-	for (unsigned int i = 0; i < hex.length(); i += 2) {
-		std::string byteString = hex.substr(i, 2);
-		uint8_t val = (uint8_t) strtol(byteString.c_str(), NULL, 16);
-		tab[i] = val;
-	}
-}
 */
+
 /*
  * Switch OFF unused pins
  *
  */
+/*
 inline void switchOffPins(std::initializer_list<uint8_t> list) {
 	for(uint8_t pin: list) {
 		pinMode(pin, INPUT_PULLUP);
 		digitalWrite(pin, HIGH);
 	}
 }
+*/
 
 /*
  * Wait for a given amount of ms
@@ -132,3 +112,74 @@ inline void loopFor(uint32_t delay) {
 	unsigned long endtime = micros() + delay * 1000;
 	while (micros() < endtime) {}
 }
+
+inline byte nibble(char c)
+{
+  if (c >= '0' && c <= '9')
+    return c - '0';
+
+  if (c >= 'a' && c <= 'f')
+    return c - 'a' + 10;
+
+  if (c >= 'A' && c <= 'F')
+    return c - 'A' + 10;
+
+  return 0;  // Not a valid hexadecimal character
+}
+
+inline void hexCharacterStringToBytes(const String & hexString, byte *byteArray) {
+  bool oddLength = hexString.length() & 1;
+
+  byte currentByte = 0;
+  byte byteIndex = 0;
+
+  for (byte charIndex = 0; charIndex < hexString.length(); charIndex++)
+  {
+    bool oddCharIndex = charIndex & 1;
+
+    if (oddLength)
+    {
+      // If the length is odd
+      if (oddCharIndex)
+      {
+        // odd characters go in high nibble
+        currentByte = nibble(hexString[charIndex]) << 4;
+      }
+      else
+      {
+        // Even characters go into low nibble
+        currentByte |= nibble(hexString[charIndex]);
+        byteArray[byteIndex++] = currentByte;
+        currentByte = 0;
+      }
+    }
+    else
+    {
+      // If the length is even
+      if (!oddCharIndex)
+      {
+        // Odd characters go into the high nibble
+        currentByte = nibble(hexString[charIndex]) << 4;
+      }
+      else
+      {
+        // Odd characters go into low nibble
+        currentByte |= nibble(hexString[charIndex]);
+        byteArray[byteIndex++] = currentByte;
+        currentByte = 0;
+      }
+    }
+  }
+}
+
+inline String loraString(const char* hexString) {
+	String res;
+	size_t n = strlen(hexString);
+	for (int8_t i = n-2; i >= 0; i -= 2) {
+		res.concat(hexString[i]);
+		res.concat(hexString[i+1]);
+	}
+	//Serial.print(hexString);Serial.print(" / ");Serial.println(res);
+	return res;
+}
+

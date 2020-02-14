@@ -11,17 +11,17 @@
 #pragma once
 
 #include <RTCZero.h>
-#include <ArduinoSTL.h>
 
 /*
  * Energy saving: pull up pins
  */
+/*
 void pullupPins(std::initializer_list<uint8_t> unusedPins) {
 	for (uint8_t pin: unusedPins) {
 		pinMode(pin, INPUT_PULLUP);
 	}
 }
-
+*/
 /*
  * Stand by mode
  */

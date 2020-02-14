@@ -203,6 +203,14 @@ public:
 	}
 
 	/*
+	 * Init RTC
+	 */ 
+	virtual void begin(bool resetTime = true) {
+		_rtc.begin(resetTime);
+		_rtc.setDate(1, 1, 0);
+	}
+
+	/*
 	 * Activates the timer
 	 */
 	virtual void enable() {
