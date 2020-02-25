@@ -15,7 +15,7 @@
 
 struct BlinkingLed {
 	const uint8_t _pin;
-	const unsigned long _interval;
+	unsigned long _interval;
 	unsigned long _previousTmst = 0;
 	int _state = LED_LOW;
 
@@ -49,6 +49,10 @@ struct BlinkingLed {
 	void updateState() {
 		digitalWrite(_pin, _state);
 		_previousTmst = 0;
+	}
+
+	void setInterval(uint32_t ms) {
+		_interval = 1000 * ms;
 	}
 
 };
