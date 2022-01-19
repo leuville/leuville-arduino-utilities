@@ -21,19 +21,6 @@ size_t arrayCapacity(const T & tab) {
 }
 
 /*
- * Prints a hexadecimal value in plain characters
- */
-void printHex(const uint8_t* data, const uint32_t numBytes) {
-	for (uint8_t i = 0; i < numBytes; i++) {
-		if (data[i] < 0x10) {
-			Serial.print("0");
-		}
-		Serial.print(data[i], HEX);
-	}
-	Serial.println("");
-}
-
-/*
  * Utilitaires de gestion du TEMPS
  */
 #define UINT32_SECONDS(h,m,s) (uint32_t)(UINT16_MINUTES(h,m)*60+s)
@@ -179,7 +166,95 @@ inline String loraString(const char* hexString) {
 		res.concat(hexString[i]);
 		res.concat(hexString[i+1]);
 	}
-	//Serial.print(hexString);Serial.print(" / ");Serial.println(res);
 	return res;
 }
 
+/*
+ * USB print
+ */
+template <typename STYPE>
+struct USBPrinter {
+	STYPE &_serial;
+
+	USBPrinter(STYPE &serial): _serial(serial) {};
+
+	void begin(uint32_t baud) {
+		_serial.begin(baud);
+	}
+
+	int available() {
+		return _serial.available();
+	}
+
+	template <typename T>
+	void print(const T data) {
+		_serial.print(data);
+	}
+
+	template <typename T>
+	void print(const T data, const int base) {
+  		_serial.print(data, base);
+	}
+
+	template <typename T>
+	void println(const T data) {
+		_serial.println(data);
+	}
+
+	template <typename T>
+	void println(const T data, const int base) {
+  		_serial.println(data, base);
+	}
+
+	template <typename T>
+	void print(const char* msg, const T data) {
+		_serial.print(msg);
+		_serial.print(data);
+	}
+
+	template <typename T>
+	void print(const char* msg, const T data, const int base) {
+  		_serial.print(msg);
+  		_serial.print(data, base);
+	}
+
+	template <typename T>
+	void println(const char* msg, const T data) {
+		_serial.print(msg);
+		_serial.println(data);
+	}
+
+	template <typename T>
+	void println(const char* msg, const T data, const int base) {
+  		_serial.print(msg);
+  		_serial.println(data, base);
+	}
+	
+	/*
+	 * Prints a hexadecimal value in plain characters
+	 */
+	void printHex(const uint8_t* data, const uint32_t numBytes) {
+		for (uint8_t i = 0; i < numBytes; i++) {
+			if (data[i] < 0x10) {
+				_serial.print("0");
+			}
+			_serial.print(data[i], HEX);
+		}
+		_serial.println("");
+	}
+
+};
+
+/*
+ * String generic concatenation
+ */
+template <typename T>
+void concat(String & str, T data) {
+	str.concat(data);
+}
+
+template <typename T, typename... Args>
+void concat(String & str, T data, Args... args) {
+	concat(str, data);
+	concat(str, args...);
+}

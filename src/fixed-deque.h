@@ -2,6 +2,9 @@
 
 #include <Arduino.h>
 
+namespace leuville {
+namespace simple_template_library {
+
 /*
  * Fixed-size deque (fifo) implemented with a circular array. 
  * 
@@ -16,6 +19,7 @@ protected:
     int8_t _front = SIZ-1;
     int8_t _back = 0;
     uint8_t _size = 0;
+    uint8_t _fullPolicy = BLOCK;
 
     static void shift(int8_t& pos, int8_t step) {
         pos += step;
@@ -25,107 +29,135 @@ protected:
             pos = 0;
     }
 
+    bool isRoomAvailable() {
+        if (full()) {
+            switch (_fullPolicy) {
+                case KEEP_FRONT: 
+                    pop_back(); 
+                    return true;
+                case KEEP_BACK: 
+                    pop_front(); 
+                    return true;
+                case BLOCK: 
+                    return false;
+            }
+        }
+        return true;
+    }
+
 public:
+
+    /*
+     * fullPolicy is policy to apply when deque is full
+     * KEEP_FRONT = discard back to make room available
+     * KEEP_BACK = discard front to make room available
+     * BLOCK = no room available
+     */
+    enum { KEEP_FRONT, KEEP_BACK, BLOCK };
+
+    deque(uint8_t fullPolicy = BLOCK): _fullPolicy(fullPolicy) {}
 
     constexpr uint8_t max_size() const {
         return SIZ;
     }
 
     uint8_t size() const {
-        if constexpr(SYNC) noInterrupts();
-        uint8_t res = _size;
-        if constexpr(SYNC) interrupts();
-        return res;
+        return _size;
     }
 
     bool empty() const {
-        if constexpr(SYNC) noInterrupts();
+        if (SYNC) noInterrupts();
         bool res = (size() == 0);
-        if constexpr(SYNC) interrupts();
+        if (SYNC) interrupts();
         return res;
     }
 
     bool full() const {
-        if constexpr(SYNC) noInterrupts();
-        bool res =  (_size == SIZ);
-        if constexpr(SYNC) interrupts();
+        if (SYNC) noInterrupts();
+        bool res = (_size == SIZ);
+        if (SYNC) interrupts();
+        return res;
     }
 
-    void push_front(const T& elt) {
-        if constexpr(SYNC) noInterrupts();
+    bool push_front(const T& elt) {
+        if (! isRoomAvailable()) {
+            return false;
+        }
+        if (SYNC) noInterrupts();
         _data[_front] = elt;
         shift(_front, -1);
         _size++;
-        if constexpr(SYNC) interrupts();
+        if (SYNC) interrupts();
+        return true;
     }
 
-    void push_back(const T& elt) {
-        if constexpr(SYNC) noInterrupts();
+    bool push_back(const T& elt) {
+        if (! isRoomAvailable()) {
+            return false;
+        }
+        if (SYNC) noInterrupts();
         _data[_back] = elt;
         shift(_back, +1);
         _size++;
-        if constexpr(SYNC) interrupts();
+        if (SYNC) interrupts();
+        return true;
     }
 
     const T& front() const {
-        if constexpr(SYNC) noInterrupts();
+        if (SYNC) noInterrupts();
         int8_t pos = _front;
         shift(pos, +1);
         const T& res = _data[pos];
-        if constexpr(SYNC) interrupts();
+        if (SYNC) interrupts();
         return res;
     }
 
     const T& back() const {
-        if constexpr(SYNC) noInterrupts();
+        if (SYNC) noInterrupts();
         int8_t pos = _back;
         shift(pos, -1);
         const T& res = _data[pos];
-        if constexpr(SYNC) interrupts();
+        if (SYNC) interrupts();
         return res;
     }
 
     T* frontPtr() {
         if (_size == 0)
             return nullptr;
-        if constexpr(SYNC) noInterrupts();
+        if (SYNC) noInterrupts();
         int8_t pos = _front;
         shift(pos, +1);
         T* res = & _data[pos];
-        if constexpr(SYNC) interrupts();
+        if (SYNC) interrupts();
         return res;
     }
 
     T* backPtr() {
         if (_size == 0)
             return nullptr;
-        if constexpr(SYNC) noInterrupts();
+        if (SYNC) noInterrupts();
         int8_t pos = _back;
         shift(pos, -1);
         T* res = & _data[pos];
-        if constexpr(SYNC) interrupts();
+        if (SYNC) interrupts();
         return res;
     }
 
     void pop_front() {
-        if constexpr(SYNC) noInterrupts();
+        if (SYNC) noInterrupts();
         shift(_front, +1);
         _size--;
-        if constexpr(SYNC) interrupts();
+        if (SYNC) interrupts();
     }
 
     void pop_back() {
-        if constexpr(SYNC) noInterrupts();
+        if (SYNC) noInterrupts();
         shift(_back, -1);
         _size--;
-        if constexpr(SYNC) interrupts();
+        if (SYNC) interrupts();
     }
     
-    void print() {
-        Serial.print("deque: ");
-        Serial.print(_front); Serial.print(" ");Serial.print(_back);Serial.print(" ");
-        Serial.println(size());
-    }
 };
 
-
+}
+}

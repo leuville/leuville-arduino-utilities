@@ -1,11 +1,15 @@
 #pragma once
 
-#include <Arduino.h>
+namespace leuville {
+namespace simple_template_library {
+
+#define NO_INTERRUPT_IF(SYNC) if constexpr(SYNC) noInterrupts()
+#define INTERRUPT_IF(SYNC) if constexpr(SYNC) interrupts()
 
 /*
  * Fixed-size map
  */
-template <typename K, typename V, uint8_t SIZ = 20>
+template <typename K, typename V, bool SYNC = false, uint8_t SIZ = 20>
 class mapArray
 {
     struct Pair {
@@ -31,11 +35,13 @@ class mapArray
         if (_size == SIZ)
             return false;
         Pair* pair = get(key);
+        NO_INTERRUPT_IF(SYNC);
         if (pair == nullptr) {
             _data[_size++] = { key, value };
         } else {
             pair->_value = value;    
-        }      
+        }  
+        INTERRUPT_IF(SYNC); 
         return true; 
     }
 
@@ -47,4 +53,17 @@ class mapArray
             return & pair->_value;
         }
     }
+
+    K & key(uint8_t pos) {
+        Pair &pair = _data[pos];
+        return pair._key;
+    }
+
+    V & value(uint8_t pos) {
+        Pair &pair = _data[pos];
+        return pair._value;
+    }
 };
+
+}
+}

@@ -36,6 +36,18 @@ struct BlinkingLed {
 		digitalWrite(_pin, _state);
 	}
 
+	operator bool() const {
+		return (_state != LED_LOW);
+	}
+
+	void toggle() {
+		if (! *this) {
+			on();
+		} else {
+			off();
+		}
+	}
+
 	void off() {
 		_state = LED_LOW;
 		updateState();
