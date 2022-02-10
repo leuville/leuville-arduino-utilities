@@ -19,7 +19,9 @@
  */
 class EnergyController {
 
-	RTCZero & _rtc;
+	RTCZero & 		_rtc;
+	const uint16_t	_vMin = 2200;
+	const uint16_t	_vMax = 3200;
 
 	/*
  	 * SAMD 32kHz clock initialization for standby modes
@@ -47,7 +49,11 @@ class EnergyController {
 
 public:
 
-	EnergyController(RTCZero & rtc): _rtc(rtc) {}
+	EnergyController(RTCZero & rtc, uint16_t vMin = 2200, uint16_t vMax = 3200)
+		: _rtc(rtc), _vMin(vMin), _vMax(vMax) 
+	{
+
+	}
 
 	void begin() {
 	}
@@ -64,28 +70,32 @@ public:
 	}
 
 	/*
-	 * Return the current voltage, between 0 and 100%
+	 * Return the voltage in mV & battery level, between 0 and 100%
 	 * 
-	 * pin & divider depends on board type used
-	 * feather_m0 = (A7,2)
-	 * sparkfun_prorf = (A5,2)
+	 * pin depends on board type used
+	 * feather_m0 = (A7)
+	 * sparkfun_prorf = (A5)
 	 * 
 	 * https://forum.sparkfun.com/viewtopic.php?f=117&t=49246&p=221795&hilit=battery+level#p221795
 	 * https://www.omzlo.com/articles/your-arduino-samd21-adc-is-wrong-did-you-notice
 	 */
-	template <uint16_t PIN=BATTPIN, uint16_t DIVIDER=POWDIVIDER>
-	uint8_t getBatteryPower() {
-		constexpr uint16_t VMAX = 420;	// 4.20 V
-		constexpr uint16_t VMIN = 360;	// 3.60 V
-
-		int vcurrent = (int)((analogRead(PIN)*DIVIDER*3.3*100)/1024);
-		if (vcurrent > VMAX)
-			vcurrent = VMAX;
-		else if (vcurrent < VMIN)
-			vcurrent = VMIN;
-		return (100 * (vcurrent - VMIN))/(VMAX - VMIN);
+	template <uint16_t PIN=BATTPIN>
+	uint16_t getVoltage() {
+  		return (uint16_t)roundf((3300.0f / 1023.0f) * (4.7f + 10.0f) / 10.0f * (float)analogRead(PIN));
 	}
 
+	template <uint16_t PIN=BATTPIN>
+	uint8_t getBatteryPower() {
+		uint16_t range = _vMax - _vMin;
+		uint16_t vcurrent =  max(getVoltage<PIN>() - _vMin, 0);
+		vcurrent = min(vcurrent, range);
+
+		return (uint8_t)round((double)(100.0 * (double)vcurrent) / (double)range);
+	}
+
+	/* 
+	 * pullup unused pins to save energy
+	 */
 	EnergyController & pullupPin(uint8_t unusedPin) {
 		pinMode(unusedPin, INPUT_PULLUP);
 		return *this;

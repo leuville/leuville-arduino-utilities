@@ -79,19 +79,6 @@ inline uint64_t convertMacAddressToUint64(String mac) {
 */
 
 /*
- * Switch OFF unused pins
- *
- */
-/*
-inline void switchOffPins(std::initializer_list<uint8_t> list) {
-	for(uint8_t pin: list) {
-		pinMode(pin, INPUT_PULLUP);
-		digitalWrite(pin, HIGH);
-	}
-}
-*/
-
-/*
  * Wait for a given amount of ms
  * NOT USE delay() or millis()
  */
