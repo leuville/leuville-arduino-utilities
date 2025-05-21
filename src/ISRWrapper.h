@@ -10,9 +10,11 @@
 
 #pragma once
 
-#include <Arduino.h>
-#define __ASSERT_USE_STDERR
-#include <assert.h>
+#include <functor.h>
+#include <LowPowerClock.h>
+
+namespace lstl = leuville::simple_template_library;
+using namespace lstl;
 
 /*
  * For object-oriented approach of ISR
@@ -20,9 +22,12 @@
  *
  * This class is template to provide many singletons as needed
  * (one per PIN as there is one interrupt per PIN)
+ * 
+ * Works with ISRTimer in order to properly initialize clock & interrupts
  */
-template <uint32_t PIN>
+template <uint8_t PIN>
 class ISRWrapper {
+
 private:
 
 	static ISRWrapper<PIN> * _instance;
@@ -45,11 +50,11 @@ private:
 
 protected:
 
-	const uint32_t _mode 			= INPUT_PULLUP;
-	uint32_t _reason 				= CHANGE;
-	const unsigned long _delay 		= 250*1000; // us
-	unsigned long _lastEventTmst 	= 0;
-	bool _enabled					= false;
+	const uint32_t 		_mode = INPUT_PULLUP;
+	uint32_t 			_reason = CHANGE;
+	const unsigned long _delay = 250*1000; // us
+	unsigned long 		_lastEventTmst 	= 0;
+	bool 				_enabled = false;
 
 public:
 
@@ -62,9 +67,8 @@ public:
 	 * reason = CHANGE, LOW, HIGH, RISING, FALLING
 	 */
 	ISRWrapper(uint32_t mode = INPUT_PULLUP, uint32_t reason = CHANGE, unsigned long delay = 250000)
-		: _mode(mode), _reason(reason), _delay(delay) {
-
-		assert(_instance == nullptr);
+		: _mode(mode), _reason(reason), _delay(delay) 
+	{
 		_instance = this;
 	}
 
@@ -75,6 +79,7 @@ public:
 	 */
 	virtual void begin() {
 		pinMode(PIN, _mode);
+		lowPowerClock.begin();
 	}
 
 	virtual void enable() {
@@ -90,7 +95,7 @@ public:
 			return;
 		_enabled = true;
 		_reason = reason;
-		attachInterrupt(digitalPinToInterrupt(PIN), ISRWrapper::ISR_commonCB, _reason);
+		lowPowerClock.attachInterruptWakeup(digitalPinToInterrupt(PIN), ISRWrapper::ISR_commonCB, _reason);
 	}
 
 	/*
@@ -100,7 +105,7 @@ public:
 		if (!_enabled)
 			return;
 		_enabled = false;
-		detachInterrupt(PIN);
+		lowPowerClock.attachInterruptWakeup(digitalPinToInterrupt(PIN), nullptr, _reason);
 	}
 
 	/*
@@ -114,7 +119,7 @@ public:
 /*
  * Declares and init the singleton / static variable (link purpose)
  */
-template <uint32_t PIN>
+template <uint8_t PIN>
 ISRWrapper<PIN> * ISRWrapper<PIN>::_instance = nullptr;
 
 /*
@@ -138,24 +143,23 @@ public:
  * ISRWrapper with delegate
  * May be used without subclassing
  */
-template <typename T, uint32_t PIN>
+template <uint8_t PIN,typename T, typename R>
 class ISRDelegate: public ISRWrapper<PIN> {
 
-	typedef void (T::*ptrFM)(uint8_t);	// callback type (member function pointer)
+	using MemberFuncPtr = R(T::*)(uint8_t);	// callback type (member function pointer)
 
 protected:
 
-	T & _delegate;
-	ptrFM _func;
+	MemberFunction<T,R,uint8_t>	_memberFunction;
 
 public:
 
-	ISRDelegate(T & delegate, ptrFM func, uint32_t mode = INPUT, uint32_t reason = CHANGE, uint32_t delay = 100)
-		: ISRWrapper<PIN>(mode, reason, delay), _delegate(delegate), _func(func) {
+	ISRDelegate(T * target, MemberFuncPtr func, uint32_t mode = INPUT, uint32_t reason = CHANGE, uint32_t delay = 100)
+		: ISRWrapper<PIN>(mode, reason, delay), _memberFunction(target,func) {
 	}
 
 	virtual void ISR_callback(uint8_t pin) override {
-		(_delegate.*_func)(pin);
+		_memberFunction()(pin);
 	}
 };
 

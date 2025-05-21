@@ -1,7 +1,7 @@
 /*
  * Module: ISRTimer
  *
- * Function: Timer based on RTCZero
+ * Function: Timer & lowpower based on RTCZero & ArduinoLowPower
  *
  * Copyright and license: See accompanying LICENSE file.
  *
@@ -10,10 +10,7 @@
 
 #pragma once
 
-#include <Arduino.h>
-#define __ASSERT_USE_STDERR
-#include <assert.h>
-#include <RTCZero.h>
+#include <LowPowerClock.h>
 
 /*
  * ISRTimer class
@@ -24,7 +21,7 @@ class ISRTimer {
 
 	static void ISR_timer() {
 		_instance->disable();
-		_instance->ISR_timeout();
+		_instance->_timeout = _instance->ISR_timeout(); // timeout may be adapted
 		if (_instance->_repeated) {
 			_instance->enable();
 		}
@@ -32,23 +29,25 @@ class ISRTimer {
 
 protected:
 
-	RTCZero		& _rtc;
-	uint32_t	_timeout = 60*60;
+	uint32_t	_timeout = 60*60;	// 1 hour
 	bool 		_enabled = false;
 	bool 		_repeated = false;
-	uint32_t	_alarmEpoch = 0;
+	bool		_beginDone = false;
+	RTCZero	&	_rtc;
 
 public:
 
-	static const ISRTimer *instance() { return _instance; }
+	enum REPEATED : bool { OFF = false, ON = true };
+
+	static ISRTimer *instance() { return _instance; }
 
 	/*
 	 * Construct a timer
 	 * timeout defaults to 1 hour with no repetition
 	 * pre-existing instance is disabled
 	 */
-	ISRTimer(RTCZero & rtc, uint32_t timeout = 60*60, boolean repeated = false)
-		: _rtc(rtc), _timeout(timeout), _repeated(repeated) {
+	ISRTimer(uint32_t timeout = 60*60, bool repeated = REPEATED::ON)
+		: _timeout{timeout}, _repeated{repeated}, _rtc(lowPowerClock.getRTC()) {
 
 		if (_instance != nullptr) {
 			_instance->disable();
@@ -60,29 +59,24 @@ public:
 		disable();
 	}
 
-	/*
-	 * Returns RTCZero instance reference
-	 */
-	RTCZero &  getRTC() {
-		return _rtc;
+	virtual void begin() {
+		lowPowerClock.begin();
 	}
 
 	/*
-	 * Init RTC
-	 */ 
-	virtual void begin(bool resetTime = true) {
-		_rtc.begin(resetTime);
+	 * Becomes public
+	 */
+	virtual void attachInterruptWakeup(uint32_t pin, voidFuncPtr callback, irq_mode mode) {
+		lowPowerClock.attachInterruptWakeup(pin, callback, mode);
 	}
 
 	/*
 	 * Activates the timer
 	 */
 	virtual void enable() {
-		_rtc.attachInterrupt(ISRTimer::ISR_timer);
 		_enabled = true;
-		_alarmEpoch = _rtc.getEpoch() + _timeout;
-		_rtc.setAlarmEpoch(_alarmEpoch);
-		_rtc.enableAlarm(_rtc.MATCH_YYMMDDHHMMSS);
+		attachInterruptWakeup(RTC_ALARM_WAKEUP, ISRTimer::ISR_timer, CHANGE);
+		lowPowerClock.setAlarmIn(_timeout);
 	}
 
 	/*
@@ -98,21 +92,14 @@ public:
 	 * Modify the system time and updates the alarm if needed
 	 */
 	void setEpoch(uint32_t epoch) {
-		uint32_t now = _rtc.getEpoch();
-		_rtc.setEpoch(epoch);
+		auto wasEnabled = _enabled;
 		if (_enabled) {
-			_rtc.setAlarmEpoch(_alarmEpoch + epoch - now);
+			disable();
 		}
-	}
-
-	/*
-	 * Returns true if a time (H,M,S) is in the future
-	 */
-	virtual bool isNowBefore(uint8_t hour = 0, uint8_t minute = 0, uint8_t second = 0) {
-		uint32_t now = _rtc.getEpoch();
-		uint32_t midnight = now - _rtc.getHours()*3600 - _rtc.getMinutes()*60 - _rtc.getSeconds();
-		uint32_t timeToCheck = midnight + (3600 * hour) + (60 * minute) + second;
-		return (timeToCheck > now);
+		_rtc.setEpoch(epoch);
+		if (wasEnabled) {
+			enable();
+		}
 	}
 
 	/*
@@ -122,7 +109,7 @@ public:
 	 * false if time in the past
 	 */
 	virtual bool setTimeout(uint8_t hour = 0, uint8_t minute = 0, uint8_t second = 0) {
-		uint32_t now = _rtc.getEpoch();
+		uint32_t now = lowPowerClock.getEpoch();
 		uint32_t midnight = now - _rtc.getHours()*3600 - _rtc.getMinutes()*60 - _rtc.getSeconds();
 		uint32_t timeout = midnight + 3600 * hour + 60 * minute + second;
 		return setTimeout(timeout - now);
@@ -147,30 +134,24 @@ public:
 		}
 	}
 
+	virtual void standbyMode() {
+		lowPowerClock.standbyMode();
+	}
+
+	RTCZero & getRTC() {
+		return _rtc;
+	}
+
 	uint32_t getTimeout() {
 		return _timeout;
 	}
 	
 	/*
-	 * Print informations (debug purpose)
-	 */
-	void printStatus() {
-		Serial.print(F("[ "));
-		Serial.print(F("time="));
-			Serial.print(_rtc.getHours()); Serial.print(F(":")); Serial.print(_rtc.getMinutes());Serial.print(F(":")); Serial.print(_rtc.getSeconds());Serial.print(F(" "));
-		Serial.print(F("date="));
-			Serial.print(_rtc.getDay()); Serial.print(F("/")); Serial.print(_rtc.getMonth());Serial.print(F("/")); Serial.print(_rtc.getYear());Serial.print(F(" "));
-		Serial.print(F("alarm="));
-			Serial.print(_rtc.getAlarmHours()); Serial.print(F(":")); Serial.print(_rtc.getAlarmMinutes());Serial.print(F(":")); Serial.print(_rtc.getAlarmSeconds());Serial.print(F(" "));
-			Serial.print(_rtc.getAlarmDay());Serial.print(F("/"));Serial.print(_rtc.getAlarmMonth());Serial.print(F("/"));Serial.print(_rtc.getAlarmYear());Serial.print(F(" "));
-		Serial.println(F("]"));
-	}
-
-	/*
 	 * Called by interrupt
 	 * To override with respect for the ISR mechanism constraints
 	 */
-	virtual void ISR_timeout() = 0;
+	virtual uint32_t ISR_timeout() = 0;
+
 };
 
 /*

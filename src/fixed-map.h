@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Arduino.h>
+
 namespace leuville {
 namespace simple_template_library {
 
@@ -9,7 +11,7 @@ namespace simple_template_library {
 /*
  * Fixed-size map
  */
-template <typename K, typename V, bool SYNC = false, uint8_t SIZ = 20>
+template <typename K = String, typename V = uint8_t, bool SYNC = false, uint8_t SIZ = 20>
 class mapArray
 {
     struct Pair {
@@ -31,7 +33,7 @@ class mapArray
 
     public:
     
-    bool put(const K & key, const V & value) {
+    bool put(const K key, const V value) {
         if (_size == SIZ)
             return false;
         Pair* pair = get(key);
@@ -45,13 +47,9 @@ class mapArray
         return true; 
     }
 
-    V * operator[](const K & key) {
+    V & operator[](const K & key) {
         Pair* pair = get(key);
-        if (pair == nullptr) {
-            return nullptr;
-        } else {
-            return & pair->_value;
-        }
+        return pair->_value;
     }
 
     K & key(uint8_t pos) {

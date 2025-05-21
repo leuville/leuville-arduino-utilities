@@ -1,7 +1,7 @@
 /*
  * Module: energy
  *
- * Function: utilities to save energy
+ * Function: computes battery level
  *
  * Copyright and license: See accompanying LICENSE file.
  *
@@ -10,95 +10,60 @@
 
 #pragma once
 
-#include <RTCZero.h>
+#include <initializer_list>
 
 /*
- * Provides standbymode based on RTCZero
- *
- * A device with standby feature should inherit from this class
+ * PIN: battery pin
+ * DIV : power divider
+ * VMIN : min voltage in millivolts
+ * VMAX : max voltage in millivolts
  */
+template <uint16_t PIN = 0, uint8_t DIV = 0, uint16_t VMIN = 3200, uint16_t VMAX = 4200>
 class EnergyController {
 
-	RTCZero & 		_rtc;
-	const uint16_t	_vMin = 2200;
-	const uint16_t	_vMax = 3200;
-
-	/*
- 	 * SAMD 32kHz clock initialization for standby modes
- 	 * Must be called after a first call to attachInterrupt()
- 	 */
-	void setupClock() {
-
-		// Set the XOSC32K to run in standby
-		SYSCTRL->XOSC32K.bit.RUNSTDBY = 1;
-
-		// The RTCZero library will setup generic clock 2 to XOSC32K/32
-		// and we'll use that for the EIC.
-
-		GCLK->CLKCTRL.reg = uint16_t(
-			GCLK_CLKCTRL_CLKEN |
-			GCLK_CLKCTRL_GEN_GCLK2 |
-			GCLK_CLKCTRL_ID( GCLK_CLKCTRL_ID_EIC_Val )
-		);
-
-		// Anti-bouncing
-		EIC->CONFIG[1].bit.FILTEN1 = 1;
-
-		while (GCLK->STATUS.bit.SYNCBUSY) {}
-	}
+	const float	_vMin = VMIN / 1000;
+	const float	_vMax = VMAX / 1000;
 
 public:
 
-	EnergyController(RTCZero & rtc, uint16_t vMin = 2200, uint16_t vMax = 3200)
-		: _rtc(rtc), _vMin(vMin), _vMax(vMax) 
-	{
-
-	}
-
-	void begin() {
-	}
-
-	void enable() {
-		setupClock();
-	}
-
 	/*
-	 * Stand by mode
-	 */
-	void standby() {
-		_rtc.standbyMode();
-	}
-
-	/*
-	 * Return the voltage in mV & battery level, between 0 and 100%
+	 * Return the voltage in V
 	 * 
 	 * pin depends on board type used
 	 * feather_m0 = (A7)
-	 * sparkfun_prorf = (A5)
 	 * 
 	 * https://forum.sparkfun.com/viewtopic.php?f=117&t=49246&p=221795&hilit=battery+level#p221795
 	 * https://www.omzlo.com/articles/your-arduino-samd21-adc-is-wrong-did-you-notice
 	 */
-	template <uint16_t PIN=BATTPIN>
-	uint16_t getVoltage() {
-  		return (uint16_t)roundf((3300.0f / 1023.0f) * (4.7f + 10.0f) / 10.0f * (float)analogRead(PIN));
+	constexpr float getVoltage() {
+		return PIN == 0 ? _vMax : ((float)analogRead(PIN) * DIV * 3.3f) / 1023.0f;
 	}
-
-	template <uint16_t PIN=BATTPIN>
-	uint8_t getBatteryPower() {
-		uint16_t range = _vMax - _vMin;
-		uint16_t vcurrent =  max(getVoltage<PIN>() - _vMin, 0);
-		vcurrent = min(vcurrent, range);
-
-		return (uint8_t)round((double)(100.0 * (double)vcurrent) / (double)range);
+	/*
+	 * Return the  battery level between 0 and 100%
+	 */
+	uint8_t getBatteryPower(uint8_t scale = 100) {
+		auto voltage = getVoltage();
+		if (voltage >= _vMax) 
+			return scale;
+		else 
+			if (voltage <= _vMin) 
+				return 0;
+			else 
+				return (uint8_t)roundf(((voltage - _vMin) / (_vMax - _vMin)) * scale);
 	}
 
 	/* 
 	 * pullup unused pins to save energy
 	 */
-	EnergyController & pullupPin(uint8_t unusedPin) {
-		pinMode(unusedPin, INPUT_PULLUP);
-		return *this;
+	void setUnusedPins(std::initializer_list<uint8_t> unusedPins) {
+		for(auto pin: unusedPins) {
+			setUnusedPin(pin);
+		}
+	}
+
+	void setUnusedPin(uint8_t unusedPin) {
+		pinMode(unusedPin, OUTPUT);
+		digitalWrite(unusedPin, LOW);
 	}
 
 };
