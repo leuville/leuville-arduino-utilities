@@ -33,7 +33,6 @@ protected:
 	bool 		_enabled = false;
 	bool 		_repeated = false;
 	bool		_beginDone = false;
-	RTCZero	&	_rtc;
 
 public:
 
@@ -47,7 +46,7 @@ public:
 	 * pre-existing instance is disabled
 	 */
 	ISRTimer(uint32_t timeout = 60*60, bool repeated = REPEATED::ON)
-		: _timeout{timeout}, _repeated{repeated}, _rtc(lowPowerClock.getRTC()) {
+		: _timeout{timeout}, _repeated{repeated} {
 
 		if (_instance != nullptr) {
 			_instance->disable();
@@ -64,19 +63,13 @@ public:
 	}
 
 	/*
-	 * Becomes public
-	 */
-	virtual void attachInterruptWakeup(uint32_t pin, voidFuncPtr callback, irq_mode mode) {
-		lowPowerClock.attachInterruptWakeup(pin, callback, mode);
-	}
-
-	/*
 	 * Activates the timer
 	 */
 	virtual void enable() {
 		_enabled = true;
-		attachInterruptWakeup(RTC_ALARM_WAKEUP, ISRTimer::ISR_timer, CHANGE);
-		lowPowerClock.setAlarmIn(_timeout);
+		lowPowerClock.attachInterrupt(ISRTimer::ISR_timer);
+		lowPowerClock.setAlarmEpoch(lowPowerClock.getEpoch() + _timeout);
+		lowPowerClock.enableAlarm(lowPowerClock.MATCH_YYMMDDHHMMSS);
 	}
 
 	/*
@@ -84,8 +77,8 @@ public:
 	 */
 	virtual void disable() {
 		_enabled = false;
-		_rtc.disableAlarm();
-		_rtc.detachInterrupt();
+		lowPowerClock.disableAlarm();
+		lowPowerClock.detachInterrupt();
 	}
 
 	/*
@@ -96,7 +89,7 @@ public:
 		if (_enabled) {
 			disable();
 		}
-		_rtc.setEpoch(epoch);
+		lowPowerClock.setEpoch(epoch);
 		if (wasEnabled) {
 			enable();
 		}
@@ -110,7 +103,7 @@ public:
 	 */
 	virtual bool setTimeout(uint8_t hour = 0, uint8_t minute = 0, uint8_t second = 0) {
 		uint32_t now = lowPowerClock.getEpoch();
-		uint32_t midnight = now - _rtc.getHours()*3600 - _rtc.getMinutes()*60 - _rtc.getSeconds();
+		uint32_t midnight = now - lowPowerClock.getHours()*3600 - lowPowerClock.getMinutes()*60 - lowPowerClock.getSeconds();
 		uint32_t timeout = midnight + 3600 * hour + 60 * minute + second;
 		return setTimeout(timeout - now);
 	}
@@ -139,7 +132,7 @@ public:
 	}
 
 	RTCZero & getRTC() {
-		return _rtc;
+		return lowPowerClock;
 	}
 
 	uint32_t getTimeout() {

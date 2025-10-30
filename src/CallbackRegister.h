@@ -1,8 +1,8 @@
 #pragma once
 
 #include <Arduino.h>
-#include <functor.h>
-#include <fixed-map.h>
+#include <MemberFunction.h>
+#include <ArrayMap.h>
 
 namespace lstl = leuville::simple_template_library;
 using namespace lstl;
@@ -22,7 +22,7 @@ class CallbackRegister
 	using MemberFuncPtr = void(V::*)();	// callback type (member function pointer)
 
     private:
-        mapArray<K, Callback<V>> _callbacks;
+        ArrayMap<K, Callback<V>> _callbacks;
 
     public:
 

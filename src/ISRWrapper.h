@@ -10,8 +10,7 @@
 
 #pragma once
 
-#include <functor.h>
-#include <LowPowerClock.h>
+#include <MemberFunction.h>
 
 namespace lstl = leuville::simple_template_library;
 using namespace lstl;
@@ -79,7 +78,6 @@ public:
 	 */
 	virtual void begin() {
 		pinMode(PIN, _mode);
-		lowPowerClock.begin();
 	}
 
 	virtual void enable() {
@@ -95,7 +93,7 @@ public:
 			return;
 		_enabled = true;
 		_reason = reason;
-		lowPowerClock.attachInterruptWakeup(digitalPinToInterrupt(PIN), ISRWrapper::ISR_commonCB, _reason);
+		attachInterrupt(digitalPinToInterrupt(PIN), ISRWrapper::ISR_commonCB, _reason);
 	}
 
 	/*
@@ -105,7 +103,7 @@ public:
 		if (!_enabled)
 			return;
 		_enabled = false;
-		lowPowerClock.attachInterruptWakeup(digitalPinToInterrupt(PIN), nullptr, _reason);
+		attachInterrupt(digitalPinToInterrupt(PIN), nullptr, _reason);
 	}
 
 	/*

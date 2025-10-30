@@ -11,8 +11,7 @@ namespace simple_template_library {
  * if SYNC is true, the object is protected against interrupts
  */
 template <typename T, bool SYNC = false, uint8_t SIZ = 20>
-class deque
-{
+class ArrayDeque {
 protected:
 
     T _data[SIZ];
@@ -55,7 +54,7 @@ public:
      */
     enum { KEEP_FRONT, KEEP_BACK, BLOCK };
 
-    deque(uint8_t fullPolicy = BLOCK): _fullPolicy(fullPolicy) {}
+    ArrayDeque(uint8_t fullPolicy = BLOCK): _fullPolicy(fullPolicy) {}
 
     constexpr uint8_t max_size() const {
         return SIZ;

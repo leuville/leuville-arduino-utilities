@@ -245,3 +245,4 @@ void concat(String & str, T data, Args... args) {
 	concat(str, data);
 	concat(str, args...);
 }
+

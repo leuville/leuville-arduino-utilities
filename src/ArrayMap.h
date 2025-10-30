@@ -12,7 +12,7 @@ namespace simple_template_library {
  * Fixed-size map
  */
 template <typename K = String, typename V = uint8_t, bool SYNC = false, uint8_t SIZ = 20>
-class mapArray
+class ArrayMap
 {
     struct Pair {
         K _key;
