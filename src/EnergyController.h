@@ -66,7 +66,7 @@ public:
 		);
  	}
 
-	template <typename T = u1_t>
+	template <typename T = uint8_t>
 	RangedValue<T> getBatteryPower(const Range<T> & range = _range100) {
 		return RangedValue<T>{getBatteryPower(range.min, range.max), range};
  	}
