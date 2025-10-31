@@ -11,6 +11,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <tuple>
 
 template<typename T>
 struct Range {
@@ -19,11 +20,37 @@ struct Range {
 };
 
 template<typename T>
+inline bool operator==(const Range<T>& a, const Range<T>& b) {
+    return std::tie(a.min, a.max) == std::tie(b.min, b.max);
+}
+template<typename T>
+inline bool operator<(const Range<T>& a, const Range<T>& b) {
+    return std::tie(a.min, a.max) <  std::tie(b.min, b.max);
+}
+template<typename T> inline bool operator!=(const Range<T>& a, const Range<T>& b){ return !(a == b); }
+template<typename T> inline bool operator>(const Range<T>& a, const Range<T>& b){ return  b < a; }
+template<typename T> inline bool operator<=(const Range<T>& a, const Range<T>& b){ return !(b < a); }
+template<typename T> inline bool operator>=(const Range<T>& a, const Range<T>& b){ return !(a < b); }
+
+template<typename T>
 struct RangedValue {
     T 			value;
     Range<T> 	range;
 	operator T() const {return value; };
 };
+
+template<typename T>
+inline bool operator==(const RangedValue<T>& a, const RangedValue<T>& b) {
+    return std::tie(a.value, a.range) == std::tie(b.value, b.range);
+}
+template<typename T>
+inline bool operator<(const RangedValue<T>& a, const RangedValue<T>& b) {
+    return std::tie(a.value, a.range) <  std::tie(b.value, b.range);
+}
+template<typename T> inline bool operator!=(const RangedValue<T>& a, const RangedValue<T>& b){ return !(a == b); }
+template<typename T> inline bool operator>(const RangedValue<T>& a, const RangedValue<T>& b){ return  b < a; }
+template<typename T> inline bool operator<=(const RangedValue<T>& a, const RangedValue<T>& b){ return !(b < a); }
+template<typename T> inline bool operator>=(const RangedValue<T>& a, const RangedValue<T>& b){ return !(a < b); }
 
 /*
  * generic scaling
